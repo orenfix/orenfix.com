@@ -58,12 +58,16 @@ h1 {
 	border: 1px solid rgb(200,200,200);
 }
 
-h2 {
+h2, h3 {
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	font-size: 2rem;
 	margin-bottom: 1rem;
+}
+
+h3 {
+	font-size: 1.5rem;
 }
 
 .list {
@@ -91,7 +95,11 @@ h2 {
 
 	h2 {
 		font-size: 1.8rem;
-		color: rgb(0,127,178);
+/*		color: rgb(0,127,178); */
+	}
+
+	h3 {
+		font-size: 1.3rem;
 	}
 
 	.list {
@@ -125,7 +133,7 @@ footer {
 	padding: 1rem;
 }
 
-h3 {
+h4 {
 	font-size: 1rem;
 	font-weight: bold;
 	margin-bottom: .3rem;
