@@ -1,0 +1,400 @@
+@import url('https://fonts.googleapis.com/css?family=Gilda+Display|Source+Sans+Pro:300,600,700');
+
+/******* FONTS *******/
+
+html {
+	font-family: 'Gilda Display', serif;
+	font-size: 14px;
+	color: white;
+}
+
+.content ul, .content p, .mawwiage {
+	font-family: 'Source Sans Pro', sans-serif;
+	font-weight: 300;
+	font-size: 1.6rem;
+	line-height: 1.8rem;
+}
+
+/******* COLORS *******/
+
+body, header, .stuff_to_do .content {
+	background-color: rgb(238,244,242);
+}
+
+h1, h1 a, h1 a:visited, h1 a:hover, h1 a:focus, h1 a:active, h2, footer {
+	color: rgb(123,155,166);
+	background-color: rgb(238,244,242);
+	text-decoration: none;
+}
+
+a, a:visited, .mawwiage {
+	color: white;
+	text-decoration: none;
+}
+
+.stuff_to_do a, .stuff_to_do a:visited {
+	color: rgb(35,54,86);
+}
+
+a:hover, a:focus, a:active, .mawwiage:hover, .mawwiage:focus {
+	text-decoration: underline;
+}
+
+nav a, nav a:visited, .menu {
+	color: rgb(35,54,86);
+}
+
+.skip_nav a, .skip_nav a:focus, nav a:hover, nav a:focus, nav a:active, nav a.selected, .menu:hover, .menu:focus {
+	color: rgb(238,244,242);
+	background-color: rgb(123,155,166);
+	text-decoration: none;
+}
+
+.accommodations a, .accommodations a:visited, .mawwiage {
+	font-weight: 600;
+}
+
+.stuff_to_do h3 {
+	color: rgb(65,91,118);
+}
+
+/******************************/
+
+button {
+	background: transparent;
+	border: 0;
+	padding: 0;
+	cursor: pointer;
+}
+
+.skip_nav a {
+	position: absolute;
+	top: -40px;
+	left: 0;
+	background: transparent;
+	border-radius: 0 0 3px 3px;
+	font-size: 1rem;
+	line-height: 1.8rem;
+	padding: 0 0.8rem;
+	transition: top 1s ease-out, background 1s linear;
+	z-index: 100;
+}
+
+.skip_nav a:focus {
+	top: 0;
+	transition: top .1s ease-in, background .5s linear;
+}
+
+a.selected {
+	cursor: default;
+}
+
+header {
+	position: fixed;
+	top: 0;
+	width: 100%;
+	display: flex;
+	flex-direction: row-reverse;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1rem 0;
+	opacity: 1;
+	z-index: 1;
+	border-bottom: 1px solid;
+}
+
+nav {
+	flex-basis: 100%;
+}
+
+nav ul {
+	display: flex;
+	flex-wrap: wrap;
+	padding-left: 2rem;
+}
+
+nav li {
+	padding-right: .5rem;
+	margin: .5rem 0;
+}
+
+nav li a {
+	padding: .4rem .5rem .3rem;
+	border-radius: 3px;
+}
+
+h1 {
+	font-size: 4rem;
+	padding-right: 2rem;
+	white-space: nowrap;
+}
+
+.menu {
+	display: none;
+	padding: 0.5rem 0.7rem;
+	border-radius: 3px;
+	z-index: 1;
+}
+
+main, .overlay {
+	display: block;
+	position: relative;
+	background: transparent no-repeat center / cover;
+	width: 100%;
+	min-height: 100vh;
+}
+
+.overlay:before {
+  	position: absolute;
+  	content: "";
+  	top: 0;
+ 	left: 0;
+ 	width: 100%;
+ 	height: 100%;
+  	background-color: rgba(0,0,0,.4);
+}
+
+.overlay * {
+	position: relative;
+}
+
+.index {
+	background-image: url('../images/field.jpg');
+}
+
+.location {
+	background-image: url('../images/river_farm.jpg');
+}
+
+.event_details {
+	background-image: url('../images/blue_truck.jpg');
+}
+
+.travel_information {
+	background-image: url('../images/tracks.jpg');
+}
+
+.accommodations {
+	background-image: url('../images/lake.jpg');
+}
+
+h2 {
+	font-size: 3rem;
+	line-height: 4rem;
+	text-align: center;
+	margin-top: 6rem;
+	padding: 2rem;
+	opacity: .8;
+}
+
+.content {
+	padding: 1rem;
+}
+
+b {
+	font-weight: 600;
+}
+
+.stuff_to_do .content {
+	margin: 0;
+	width: auto;
+}
+
+.columns {
+	display: flex;
+}
+
+.column-2 {
+	width: 50%;
+	order: 2;
+	padding: 0 3rem;
+}
+
+.column-3 {
+	width:  25%;
+	order: 1;
+	padding: 0 1rem;
+}
+
+.column-3:last-child {
+	order: 3;
+}
+
+.center {
+	width: 50%;
+	order: 2;
+}
+
+h3 {
+	font-size: 2rem;
+	text-align: center;
+	padding-bottom: .5rem;
+}
+
+.content ul {
+	list-style: none;
+	padding-bottom: 1rem;
+}
+
+.content li {
+	text-align: center;
+	padding-bottom: .5rem;
+}
+
+.column-2 li {
+	list-style: circle;
+	text-align: left;
+}
+
+.content p {
+	text-align: center;
+	max-width: 720px;
+	margin: 0 auto;
+	padding: 0 1rem 0.5rem;
+}
+
+.content p:last-child {
+	padding-bottom: 0;
+}
+
+img {
+	display: block;
+	width: 100%;
+	max-width: 300px;
+	height: auto;
+	margin: 0 auto 1.5rem;
+	border-radius: 5px;
+}
+
+.center img {
+	max-width: 500px;
+}
+
+.mawwiage {
+	display: block;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.mawwiage::after {
+	display: inline-block;
+	font-style: normal;
+	font-variant: normal;
+	text-rendering: auto;
+	-webkit-font-smoothing: antialiased;
+	font-family: 'Font Awesome 5 Free'; 
+	font-weight: 900; 
+	content: '\f04b';
+	position: relative;
+	left: .5rem;
+	visibility: hidden;
+}
+
+.mawwiage.play:hover::after, .mawwiage.play:focus::after {
+	content: '\f04b';
+	visibility: visible;
+}
+
+.mawwiage.pause:hover::after, .mawwiage.pause:focus::after {
+	content: '\f04c';
+	visibility: visible;
+}
+
+footer {
+	width: 100%;
+	border-top: 1px solid;
+}
+
+footer p {
+	font-size: 1rem;
+	padding: 0.5rem;
+}
+
+header, footer {
+	border-color: rgba(35,54,86,.2);
+}
+
+@media only screen and (max-width: 970px) {
+	header {
+		flex-direction: column;
+		justify-content: flex-end;
+		padding-bottom: 0;
+	}
+
+	h1 {
+		padding-right: 0;
+	}
+
+	.menu {
+		display: block;
+	}
+
+	nav {
+		flex-basis: auto;
+	}
+
+	nav ul {
+		display: none;
+		flex-direction: column;
+		flex-wrap: nowrap;
+		text-align: center;
+		padding-left: 0;
+	}
+
+	nav li {
+		padding: 0;
+		line-height: 2rem;
+	}
+
+	h2 {
+		margin-top: 8rem;
+	}
+
+	.columns {
+		flex-direction: column;
+	}
+
+	.column-2, .column-3 {
+		order: 1;
+		width: auto;
+	}
+
+	.column-2 {
+		padding: 0 2rem;
+	}
+
+	.column-3 {
+		padding: 0;
+	}
+
+	.content {
+		width: auto;
+	}
+
+	.content ul, .content p {
+		font-size: 1.4rem;
+		line-height: 1.6rem;
+	}
+}
+
+/*********** FOR CREATING WEB APP ICON AND FAVICON **************
+header {
+	height: 500px;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	border: 0;
+}
+
+h1 {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	font-size: 2.3rem;
+	color: rgb(35,54,86);
+	width: 65px;
+	height: 65px;
+	padding: 0;
+}
