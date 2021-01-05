@@ -81,6 +81,11 @@ h3 {
 	margin-left: 1rem;
 }
 
+img.xword {
+	width: 80%;
+	margin: 1rem 0 0 0;
+}
+
 @media only screen and (max-width: 1200px) {
 	.lists {
 		border-left: 0;
@@ -107,6 +112,10 @@ h3 {
 
 	.list:first-child {
 		margin-bottom: 2rem;
+	}
+
+	img.xword {
+		width: 60%;
 	}
 }
 
