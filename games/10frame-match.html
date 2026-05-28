@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>10-Frame Matching Game</title>
+<style>
+  :root{
+    --card-w: 90px;
+    --card-h: 110px;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji", sans-serif;
+    background: #f6f7fb;
+    color: #222;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  header { padding: 16px 12px 4px; text-align: center; }
+  h1 { margin: 8px 0 0; font-size: 1.4rem; font-weight: 700; }
+  p.sub { margin: 4px 0 0; color:#555; }
+  footer{ font-size:11px; color:#757575; text-align:center; }
+
+  #hud {
+    display: flex; gap: 16px; margin: 8px 0 0; font-size: 0.95rem; color:#444; justify-content: center;
+  }
+
+  /* Fixed 4 × 5 grid */
+  #game-board {
+    width: min(1000px, 96vw);
+    display: grid;
+    grid-template-columns: repeat(4, var(--card-w));
+    grid-auto-rows: var(--card-h);
+    gap: 12px;
+    justify-content: center;
+    padding: 16px 8px;
+    perspective: 1000px; /* enables 3D flip */
+  }
+
+  /* Card structure for flip */
+  .card {
+    width: var(--card-w);
+    height: var(--card-h);
+    position: relative;
+    cursor: pointer;
+    border-radius: var(--radius);
+    transform-style: preserve-3d;
+    transition: transform 0.45s ease;
+  }
+  .card.is-flipped { transform: rotateY(180deg); }
+  .card.is-matched { pointer-events: none; }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+    backface-visibility: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #d7d9e0;
+    background: white;
+  }
+
+  .card-front {
+    background: linear-gradient(135deg,#e9ecf6 0%, #ffffff 60%);
+    border: 2px solid #cfd3e2;
+  }
+  .card-front::after{
+    content:"";
+    width: 70%;
+    height: 70%;
+    border-radius: 10px;
+    border: 2px dashed #9aa3bd;
+  }
+
+  .card-back {
+    transform: rotateY(180deg);
+    background: #fff;
+  }
+
+  .num {
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  /* 10-frame: 5 columns × 2 rows */
+  .ten-frame {
+    width: 74px;
+    height: 34px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 2px;
+    border: 2px solid #9aa3bd;
+    background: #fff;
+  }
+  .tf-cell {
+    position: relative;
+    border: 1px solid #c9cee0;
+    display: grid;
+    place-items: center;
+  }
+  .tf-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    outline: 1px solid #3b3f58;
+    background: #3b3f58;
+  }
+  .tf-dot.empty {
+    background: transparent;
+    outline-color: #c4c8d8;
+  }
+
+  /* Matched flourish removal */
+  .fade-out {
+    animation: fadeRemove 450ms ease forwards;
+  }
+  @keyframes fadeRemove {
+    to { opacity: 0; transform: scale(0.9) rotateY(180deg); }
+  }
+
+  /* Confetti canvas */
+  #confetti {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  /* Splash screen */
+  #splash {
+    position: fixed;
+    inset: 0;
+    background: rgba(20,25,40,0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+  }
+  #splash .modal {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+    padding: 28px 22px;
+    width: min(420px, 92vw);
+    text-align: center;
+  }
+  #splash h2 { margin: 0 0 8px; font-size: 1.6rem; }
+  #splash p { margin: 0 0 18px; color: #444; }
+  .btn {
+    display: inline-block;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 0;
+    background: #4353ff;
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .btn.secondary { background: #e3e7ff; color: #2b2f56; }
+
+  /* Mobile tweaks: keep 4 columns; scale card size down a bit */
+  @media (max-width: 480px) {
+    :root { --card-w: 76px; --card-h: 94px; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>🔢 10-Frame Match 🔢</h1>
+    <div id="hud">
+      <div>Turns: <span id="turns">0</span></div>
+      <div>Matches: <span id="matches">0</span>/10</div>
+    </div>
+  </header>
+
+  <main id="game-board" aria-label="Memory game board"></main>
+  <canvas id="confetti"></canvas>
+  <footer>&copy; <script>document.write(new Date().getFullYear());</script> Oren Fix (with some help from ChatGPT-5).<br>All rights reserved.</footer>
+
+
+  <!-- Splash screen -->
+  <div id="splash" role="dialog" aria-modal="true">
+    <div class="modal">
+      <h2>Great job!</h2>
+      <p>You matched all the cards!</p>
+      <div style="display:flex; gap:10px; justify-content:center;">
+        <button class="btn" id="play-again">Play Again</button>
+        <button class="btn secondary" id="close-splash">Close</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ---------- State & Setup ---------- */
+const board = document.getElementById('game-board');
+const turnsEl = document.getElementById('turns');
+const matchesEl = document.getElementById('matches');
+const splash = document.getElementById('splash');
+const playAgainBtn = document.getElementById('play-again');
+const closeSplashBtn = document.getElementById('close-splash');
+
+const confettiCanvas = document.getElementById('confetti');
+const cctx = confettiCanvas.getContext('2d');
+function sizeCanvas() {
+  confettiCanvas.width = innerWidth;
+  confettiCanvas.height = innerHeight;
+}
+sizeCanvas();
+addEventListener('resize', sizeCanvas);
+
+const TOTAL_PAIRS = 10; // exactly 10 matches (20 cards)
+let deck = [];
+let flipped = [];
+let turns = 0;
+let matches = 0;
+
+function sampleTenFromZeroToTen() {
+  // values 0..10 inclusive -> pick 10 unique at random
+  const all = Array.from({length: 11}, (_, i) => i);
+  for (let i = all.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [all[i], all[j]] = [all[j], all[i]];
+  }
+  return all.slice(0, TOTAL_PAIRS);
+}
+
+function buildDeck(){
+  const chosen = sampleTenFromZeroToTen(); // 10 unique values
+  const numCards = chosen.map(n => ({ kind:'num', value:n }));
+  const frameCards = chosen.map(n => ({ kind:'frame', value:n }));
+  deck = [...numCards, ...frameCards];
+  // shuffle
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+}
+
+/* ---------- DOM Helpers ---------- */
+function el(tag, attrs={}, children=[]) {
+  const e = document.createElement(tag);
+  Object.entries(attrs).forEach(([k,v]) => {
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('data-')) e.setAttribute(k, v);
+    else e[k] = v;
+  });
+  children.forEach(ch => e.appendChild(ch));
+  return e;
+}
+
+function makeTenFrame(n){
+  // 5×2 grid; fill left-to-right, top-to-bottom
+  const container = el('div', { class:'ten-frame', role:'img', 'aria-label': `${n} on ten-frame` });
+  for (let i=0;i<10;i++){
+    const cell = el('div', { class:'tf-cell' });
+    const dot = el('div', { class:'tf-dot'+(i < n ? '' : ' empty') });
+    cell.appendChild(dot);
+    container.appendChild(cell);
+  }
+  return container;
+}
+
+function renderCard(cardData){
+  const card = el('button', {
+    class: 'card',
+    type: 'button',
+    'aria-label': 'Memory card',
+  });
+
+  const front = el('div', { class:'card-face card-front' });
+  const back = el('div', { class:'card-face card-back' });
+
+  if (cardData.kind === 'num') {
+    const num = el('div', { class:'num' });
+    num.textContent = cardData.value;
+    back.appendChild(num);
+  } else {
+    back.appendChild(makeTenFrame(cardData.value));
+  }
+
+  card.appendChild(front);
+  card.appendChild(back);
+
+  card.dataset.value = cardData.value;
+  card.dataset.kind = cardData.kind;
+
+  card.addEventListener('click', () => flipCard(card));
+  return card;
+}
+
+function mountBoard(){
+  board.innerHTML = '';
+  deck.forEach(c => board.appendChild(renderCard(c)));
+}
+
+/* ---------- Game Logic ---------- */
+let lock = false;
+
+function flipCard(card){
+  if (lock) return;
+  if (card.classList.contains('is-flipped')) return;
+  if (card.classList.contains('is-matched')) return;
+
+  card.classList.add('is-flipped');
+  flipped.push(card);
+
+  if (flipped.length === 2) {
+    lock = true;
+    turns++;
+    turnsEl.textContent = turns;
+
+    const [a,b] = flipped;
+    const isMatch = a.dataset.value === b.dataset.value && a.dataset.kind !== b.dataset.kind;
+
+    // brief reveal pause before action
+    const MISMATCH_PAUSE_MS = 900;
+
+    setTimeout(() => {
+      if (isMatch) {
+        matches++;
+        matchesEl.textContent = matches;
+        launchConfetti(24);
+        a.classList.add('is-matched','fade-out');
+        b.classList.add('is-matched','fade-out');
+        setTimeout(() => {
+          a.style.visibility = 'hidden';
+          b.style.visibility = 'hidden';
+        }, 420);
+
+        if (matches === TOTAL_PAIRS) {
+          setTimeout(showSplash, 500);
+        }
+      } else {
+        // flip back after the pause
+        a.classList.remove('is-flipped');
+        b.classList.remove('is-flipped');
+      }
+      flipped = [];
+      lock = false;
+    }, MISMATCH_PAUSE_MS);
+  }
+}
+
+function resetGame(){
+  turns = 0; matches = 0; flipped = [];
+  turnsEl.textContent = '0';
+  matchesEl.textContent = '0';
+  buildDeck();
+  mountBoard();
+}
+
+/* ---------- Splash Screen ---------- */
+function showSplash(){
+  splash.style.display = 'flex';
+}
+function hideSplash(){
+  splash.style.display = 'none';
+}
+playAgainBtn.addEventListener('click', () => { hideSplash(); resetGame(); });
+closeSplashBtn.addEventListener('click', hideSplash);
+
+/* ---------- Confetti ---------- */
+let confetti = [];
+function launchConfetti(count=18){
+  for(let i=0;i<count;i++){
+    confetti.push({
+      x: Math.random()*confettiCanvas.width,
+      y: -20 - Math.random()*60,
+      v: 2 + Math.random()*2.5,
+      r: Math.random()*Math.PI,
+      s: 8 + Math.random()*12,
+      w: 1 + Math.random()*2,
+      shape: Math.random()<0.5?'rect':'circle',
+      hue: Math.floor(Math.random()*360),
+    });
+  }
+}
+function drawConfetti(){
+  cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+  confetti.forEach(p=>{
+    p.y += p.v;
+    p.r += 0.02 * p.w;
+    cctx.save();
+    cctx.translate(p.x,p.y);
+    cctx.rotate(p.r);
+    cctx.fillStyle = `hsl(${p.hue} 80% 60%)`;
+    if (p.shape === 'rect') {
+      cctx.fillRect(-p.s/2, -p.s/2, p.s, p.s);
+    } else {
+      cctx.beginPath();
+      cctx.arc(0,0,p.s*0.45,0,Math.PI*2);
+      cctx.fill();
+    }
+    cctx.restore();
+  });
+  confetti = confetti.filter(p => p.y < confettiCanvas.height + 40);
+  requestAnimationFrame(drawConfetti);
+}
+drawConfetti();
+
+/* ---------- Boot ---------- */
+resetGame();
+</script>
+</body>
+</html>

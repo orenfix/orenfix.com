@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>10-Frame Fun</title>
+<style>
+  :root{
+    --bg:#f7fafc;
+    --card:#ffffff;
+    --ink:#111111;
+    --accent:#0ea5e9;
+    --accent-2:#22c55e;
+    --muted:#6b7280;
+    --wrong:#ef4444;
+    --right:#22c55e;
+    --gold:#fbbf24;
+    /* Baseline sizing for small phones (e.g., iPhone 13 mini 375×812) */
+    --app-max-w: 390px;
+    --app-pad: 12px;
+    --cell-size: 52px; /* tuned for 5×2 frame on narrow screens */
+    --dot-size: 24px;
+    --gap: 8px;
+    --hud-pill-pad: 6px 8px;
+    --btn-pad: 10px 12px;
+  }
+
+  /* Use small viewport units to avoid address-bar jumpiness */
+  html,body{height:100svh}
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    color:var(--ink);
+    background: radial-gradient(1200px 800px at 20% 10%, #eef6ff 0%, var(--bg) 60%);
+    display:flex; /*align-items:center;*/ justify-content:center;
+    padding: calc(env(safe-area-inset-top) + 8px) calc(env(safe-area-inset-right) + 8px) calc(env(safe-area-inset-bottom) + 8px) calc(env(safe-area-inset-left) + 8px);
+    height: 490px;
+    overflow:hidden; /* prevent scroll */
+  }
+
+  .app{
+    width: min(100%, var(--app-max-w));
+    max-height: 100%;
+    background:var(--card);
+    border-radius:16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.08);
+    padding: var(--app-pad);
+    display:flex; flex-direction:column;
+    gap: 10px;
+    position:relative;
+  }
+
+  header{ display:flex; align-items:center; gap:10px; }
+  .bot{ font-size:40px; line-height:1; background:#fff; border-radius:10px; padding:4px 8px; /*border:2px solid #0001; box-shadow: 0 2px 0 #0002 inset;*/ }
+  h1{font-size:20px; margin:0}
+  .sub{color:var(--muted); font-size:12px; margin-top:1px}
+
+  .hud{
+    display:flex; align-items:center; justify-content:space-between; gap: 18px; padding-bottom: 10px;flex-wrap:wrap;
+  }
+  .score{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .pill{
+    background:#f1f5f9;
+    padding: var(--hud-pill-pad);
+    border-radius:999px;
+    font-weight:700;
+    font-size:12px;
+  }
+  .progress{ flex:1; height:20px; background:#eef2f7; border-radius:999px; overflow:hidden; min-width:120px; }
+  .bar{ height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--accent-2)); transition:width .35s ease }
+
+  /* Single column layout for mobile */
+  .frame-wrap{ display:flex; flex-direction:column; gap:8px; }
+
+  .tenframe{
+    --cell: var(--cell-size);
+    background:#fff; border:3px solid #111; border-radius:12px;
+    padding:8px; display:grid; gap:6px; justify-items:center;
+  }
+  .grid{
+    position:relative;
+    width: calc(5 * var(--cell));
+    height: calc(2 * var(--cell));
+    background:#fff;
+    border: 2px solid #111;
+    border-radius:8px;
+  }
+  .v1,.v2,.v3,.v4{ position:absolute; top:0; bottom:0; width:0; border-left:2px solid #111; }
+  .v1{ left: calc(1 * var(--cell)); }
+  .v2{ left: calc(2 * var(--cell)); }
+  .v3{ left: calc(3 * var(--cell)); }
+  .v4{ left: calc(4 * var(--cell)); }
+  .h1{ position:absolute; left:0; right:0; height:0; top: calc(1 * var(--cell)); border-top:2px solid #111; }
+  .cell-spot{ position:absolute; width: var(--cell); height: var(--cell); display:flex; align-items:center; justify-content:center; }
+  .dot{ width: var(--dot-size); height: var(--dot-size); border-radius:50%; background:#000; }
+
+  .question{ font-size:16px; font-weight:800; margin:2px 0 0; text-align:center; }
+
+  /* Horizontal choices with compact spacing */
+  .choices{ display:flex; gap:8px; flex-wrap:nowrap; justify-content:center; }
+  .choice{
+    min-width:72px;
+    font-size:18px; font-weight:800;
+    padding: var(--btn-pad);
+    border-radius:12px; border:2px solid #0000; cursor:pointer;
+    background:#f9fafb; display:flex; align-items:center; justify-content:center;
+    transition: transform .05s ease, background .2s ease, border-color .2s ease; user-select:none;
+    touch-action: manipulation;
+  }
+  .choice:active{transform: scale(0.98)}
+  .choice.correct{background:#ecfdf5; border-color: var(--right)}
+  .choice.wrong{background:#fef2f2; border-color: var(--wrong)}
+
+  .controls{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  button{ border:none; background:var(--ink); color:#fff; font-weight:800; padding: var(--btn-pad); border-radius:12px; cursor:pointer; font-size:14px; }
+  button.secondary{ background:#e2e8f0; color:#111; }
+
+  .toast{ text-align:center; font-weight:800; min-height:30px; font-size:14px; }
+  .toast.good{color:var(--right)}
+  .toast.bad{color:var(--wrong)}
+
+  footer{ font-size:11px; color:#757575; text-align:center; }
+
+  /* Confetti canvas IN FRONT of UI */
+  #confetti {
+    position: fixed; inset: 0; pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Results overlay (full-bleed in card) */
+  .overlay{
+    position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+    background: rgba(255,255,255,0.92);
+    border-radius:16px;
+    padding: 12px;
+  }
+  .card{
+    background:#fff; border:2px solid #1111; border-radius:16px; padding:14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.08);
+    width: 100%; max-width: 360px;
+    text-align:center;
+  }
+  .card h2{ margin: 0 0 6px; font-size: 20px; }
+  .bigscore{
+    font-weight: 900;
+    line-height: 1.1;
+    font-size: clamp(40px, 12vw, 64px);
+    margin: 2px 0 6px;
+    color: #111;
+  }
+  .card p{ margin: 0 0 10px; color: var(--muted); font-size: 13px; }
+  .crownline{ font-size: clamp(22px, 8vw, 34px); margin-bottom: 6px; display: none; }
+
+  .overlay.perfect .card{
+    border-color: var(--gold);
+    box-shadow: 0 12px 40px rgba(251,191,36,.35);
+    transform: translateZ(0); /* mobile GPU nudge */
+  }
+  .overlay.perfect .crownline{ display:block; }
+
+  /* Fine-tune for extra-small widths (e.g., 320px) */
+  @media (max-width: 340px){
+    :root{
+      --cell-size: 48px;
+      --dot-size: 22px;
+      --btn-pad: 8px 10px;
+    }
+    .choice{ min-width:64px; font-size:16px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<div class="app" role="group" aria-label="10-Frame Game">
+  <header>
+    <div class="bot" aria-hidden="true">🤖</div>
+    <div>
+      <h1>10-Frame Fun</h1>
+   </header>
+
+  <div class="hud">
+    <div class="score">
+      <div class="pill">Score: <span id="score">0</span></div>
+      <div class="pill">Turn: <span id="turn">0</span>/10</div>
+      <div class="pill">Mode: <span class="mode-tag" id="modeTag">Count</span></div>
+    </div>
+    <div class="progress" aria-label="Progress">
+      <div class="bar" id="bar"></div>
+    </div>
+  </div>
+
+  <div class="frame-wrap">
+    <section class="tenframe" aria-live="polite">
+      <div class="grid" id="grid" role="img" aria-label="5-by-2 frame with dots">
+        <div class="v1"></div><div class="v2"></div><div class="v3"></div><div class="v4"></div><div class="h1"></div>
+      </div>
+      <div class="question" id="question">How many dots?</div>
+    </section>
+
+    <section>
+      <div class="choices" id="choices"></div>
+      <div class="toast" id="toast" aria-live="assertive"></div>
+      <div class="controls">
+        <button id="toggleModeBtn" class="secondary">Switch Mode</button>
+        <button id="nextBtn" class="secondary">New Question</button>
+        <button id="resetBtn" class="secondary">Reset</button>
+      </div>
+    </section>
+  </div>
+
+  <footer>&copy; <script>document.write(new Date().getFullYear());</script> Oren Fix (with some help from ChatGPT-5).<br>All rights reserved.</footer>
+
+  <!-- Results overlay -->
+  <div class="overlay" id="overlay">
+    <div class="card">
+      <div id="crownline" class="crownline">🌟 Perfect 10! 🌟</div>
+      <h2 id="finalTitle">Round Complete!</h2>
+      <div id="finalScore" class="bigscore">0 / 10</div>
+      <p id="finalText">Want to play again?</p>
+      <div class="controls" style="justify-content:center">
+        <button id="playAgainBtn">Play Again</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const grid = document.getElementById('grid');
+  const questionEl = document.getElementById('question');
+  const choicesEl = document.getElementById('choices');
+  const toast = document.getElementById('toast');
+  const scoreEl = document.getElementById('score');
+  const turnEl = document.getElementById('turn');
+  const bar = document.getElementById('bar');
+  const modeTag = document.getElementById('modeTag');
+  const nextBtn = document.getElementById('nextBtn');
+  const toggleBtn = document.getElementById('toggleModeBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const overlay = document.getElementById('overlay');
+  const finalScore = document.getElementById('finalScore');
+  const finalText = document.getElementById('finalText');
+  const finalTitle = document.getElementById('finalTitle');
+  const crownline = document.getElementById('crownline');
+  const playAgainBtn = document.getElementById('playAgainBtn');
+
+  const CAPACITY = 10;
+  const ROUND = 10;
+
+  let score = 0, turns = 0, mode = 'count', currentCorrect = null, locked = false;
+
+  function randint(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+  function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+
+  function renderDots(n){
+    [...grid.querySelectorAll('.cell-spot')].forEach(el => el.remove());
+    const cell = getComputedStyle(document.documentElement).getPropertyValue('--cell-size').trim() || '52px';
+    for (let i=0;i<CAPACITY;i++){
+      const r=Math.floor(i/5), c=i%5;
+      const spot=document.createElement('div'); spot.className='cell-spot';
+      spot.style.left=`calc(${c} * ${cell})`; spot.style.top=`calc(${r} * ${cell})`;
+      if(i<n){const d=document.createElement('div'); d.className='dot'; spot.appendChild(d);}
+      grid.appendChild(spot);
+    }
+  }
+
+  // Confetti
+  const confettiCanvas=document.getElementById('confetti');
+  const cctx=confettiCanvas.getContext('2d'); const confetti=[];
+  function resizeCanvas(){confettiCanvas.width=window.innerWidth;confettiCanvas.height=window.innerHeight;}
+  window.addEventListener('resize',resizeCanvas); resizeCanvas();
+  function launchConfetti(count=12, spread=1, speed=1){const emojis=['🎉','✨','⭐'];for(let i=0;i<count;i++){confetti.push({x:Math.random()*confettiCanvas.width,y:-20-Math.random()*80*spread,v:5+Math.random()*5,r:Math.random()*Math.PI,e:emojis[(Math.random()*emojis.length)|0],s:18+Math.random()*18});}}
+  function drawConfetti(){cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);confetti.forEach(p=>{p.y+=p.v;p.r+=0.03;cctx.save();cctx.translate(p.x,p.y);cctx.rotate(p.r);cctx.font=p.s+'px serif';cctx.fillText(p.e,0,0);cctx.restore();});for(let i=confetti.length-1;i>=0;i--){if(confetti[i].y>confettiCanvas.height+40)confetti.splice(i,1);}requestAnimationFrame(drawConfetti);}requestAnimationFrame(drawConfetti);
+
+  function updateHUD(){
+    scoreEl.textContent = String(score);
+    turnEl.textContent = String(turns);
+    bar.style.width = (turns/ROUND*100) + '%';
+  }
+
+  function endRound(){
+    finalScore.textContent = `${score} / ${ROUND}`;
+    if (score === ROUND){
+      finalTitle.textContent = "Perfect Score!";
+      finalText.textContent = "Flawless! You're a 10-frame superstar!";
+      overlay.classList.add('perfect');
+      crownline.style.display = 'block';
+      launchConfetti(28, 1.4);
+    } else {
+      finalTitle.textContent = "Round Complete!";
+      finalText.textContent = "Want to play again?";
+      overlay.classList.remove('perfect');
+      crownline.style.display = 'none';
+      launchConfetti(18, 1.0);
+    }
+    overlay.style.display = 'flex';
+  }
+
+  function newRound(){
+    score = 0; turns = 0;
+    overlay.style.display = 'none';
+    updateHUD();
+    generateQuestion();
+  }
+
+  function generateQuestion(){
+    if (turns >= ROUND){
+      return endRound();
+    }
+    locked = false;
+    toast.textContent='';
+
+    modeTag.textContent = mode === 'count' ? 'Count' : 'Fill';
+
+    const n = randint(0,CAPACITY);
+    renderDots(n);
+
+    if (mode === 'count'){
+      questionEl.textContent = 'How many dots?';
+      currentCorrect = n;
+    } else {
+      questionEl.textContent = 'How many more to fill the frame?';
+      currentCorrect = CAPACITY - n;
+    }
+
+    const opts=new Set([currentCorrect]);
+    while(opts.size<3){
+      let d;
+      if(mode==='fill'){
+        const pool=[currentCorrect-1,currentCorrect+1,randint(0,CAPACITY),randint(0,CAPACITY)];
+        d=pool[randint(0,pool.length-1)];
+      }else{
+        const pool=[n-1,n+1,randint(0,CAPACITY),randint(0,CAPACITY)];
+        d=pool[randint(0,pool.length-1)];
+      }
+      if(d>=0 && d<=CAPACITY) opts.add(d);
+    }
+    const choices=shuffle([...opts]);
+
+    choicesEl.innerHTML='';
+    choices.forEach(val=>{
+      const btn=document.createElement('div');
+      btn.className='choice'; btn.setAttribute('role','button'); btn.setAttribute('tabindex','0'); btn.textContent=String(val);
+      btn.addEventListener('click',()=>pick(val,btn));
+      btn.addEventListener('keydown',(e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); pick(val,btn); } });
+      choicesEl.appendChild(btn);
+    });
+
+    updateHUD();
+  }
+
+  function pick(val,btn){
+    if(locked) return;
+    locked = true;
+    const nodes=[...document.querySelectorAll('.choice')];
+    nodes.forEach(n=>n.style.pointerEvents='none');
+
+    if(val===currentCorrect){
+      btn.classList.add('correct');
+      score += 1;
+      toast.className='toast good'; toast.textContent='Great job!';
+      launchConfetti(12, 1.2);
+    } else {
+      btn.classList.add('wrong');
+      nodes.forEach(n => { if(Number(n.textContent)===currentCorrect) n.classList.add('correct'); });
+      toast.className='toast bad'; toast.textContent=`The answer was ${currentCorrect}.`;
+    }
+
+    turns += 1;
+    setTimeout(() => {
+      if (turns >= ROUND){ endRound(); }
+      else { generateQuestion(); }
+      updateHUD();
+    }, 2000);
+  }
+
+  nextBtn.addEventListener('click', generateQuestion);
+  toggleBtn.addEventListener('click', ()=>{ mode = (mode==='count') ? 'fill' : 'count'; generateQuestion(); });
+  resetBtn.addEventListener('click', ()=>{ score=0; turns=0; updateHUD(); generateQuestion(); });
+  playAgainBtn.addEventListener('click', newRound);
+
+  // Start
+  generateQuestion();
+})();
+</script>
+</body>
+</html>

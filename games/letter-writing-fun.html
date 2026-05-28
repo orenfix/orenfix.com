@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Letter Writing Fun</title>
+  <link href="https://fonts.googleapis.com/css2?family=ABeeZee:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --panel:#ffffff;
+      --ink:#2563eb;
+      --guide:#e2e8f0; /* light gray guide */
+      --text:#0f172a;
+      --shadow:0 10px 25px rgba(2,6,23,.08);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Ubuntu,Cantarell,Noto Sans,sans-serif;
+      background:var(--bg); color:var(--text);
+      display:flex; flex-direction:column; gap:12px;
+    }
+    header{
+      padding:12px 14px; background:#fff; box-shadow:var(--shadow);
+      position:sticky; top:0; z-index:10; border-bottom:1px solid #e5e7eb;
+    }
+    .titlebar{ display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:8px }
+    .titlebar h1{ margin:0; font-size:1.3rem; font-weight:800; letter-spacing:.2px }
+    .titlebar .emoji{ font-size:1.4rem }
+
+    .controls{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center }
+    .controls > *{ margin:2px }
+    .group{ display:flex; gap:6px; align-items:center; padding:6px 8px; border:1px solid #e5e7eb; border-radius:12px; background:#fff }
+    label{ font-size:.9rem }
+    select,button,input[type="color"]{
+      font:inherit; padding:8px 10px; border:1px solid #d1d5db; border-radius:10px; background:#fff;
+    }
+    input[type="color"]{ width:42px; height:32px; padding:0; border-radius:8px; border:1px solid #cbd5e1; background:#fff; border: none }
+
+    button{ cursor:pointer; display:inline-flex; align-items:center; justify-content: center; gap:8px }
+    button.primary{ background:var(--ink); color:#fff; border-color:transparent }
+    button.ghost{ background:#fff; width: 50px; padding: 0 }
+    button.danger{ background:#ef4444; color:#fff; border-color:transparent }
+    button:active{ transform:translateY(1px) }
+    .undo{font-size: 2em}
+
+    main{ width:100%; max-width:1200px; margin:0 auto; padding:8px 14px 24px; display:block }
+    .panels{ display:grid; grid-template-columns:1fr 1fr; gap:14px }
+
+    .card{ background:var(--panel); border-radius:18px; box-shadow:var(--shadow); overflow:hidden; display:flex; flex-direction:column }
+    .card header{ position:static; box-shadow:none; border-bottom:1px solid #eef2f7; background:linear-gradient(#fff,#f9fafb) }
+    .card h2{ margin:0; font-size:1.05rem }
+    .toolbar{ display:flex; gap:8px; padding:10px; flex-wrap:wrap; justify-content:center; border-top:1px solid #eef2f7; background:#fafafa }
+
+    .stage{ position:relative; flex:1; min-height:300px; display:flex; align-items:center; justify-content:center; background:#ffffff; }
+    .stage canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; }
+    .stage canvas.guide{ pointer-events:none; }
+
+    .hint{ font-size:.85rem; color:#475569; text-align:center; padding:4px 12px }
+    .badge{ font-weight:700; font-size:1rem; padding:8px 12px; border-radius:999px; background:#eef2ff; color:#1e3a8a }
+    .label-under{ text-align:center; padding:10px 8px; font-size:1.2rem; font-weight: bold; color:#334155 }
+    footer{ font-size:11px; color:#757575; text-align:center; }
+    
+/* --- Mobile height tightening (iPhone mini & similar) --- */
+@media (max-width: 430px) {
+  .stage { min-height: clamp(150px, 32vh, 220px); }
+  .card header h2 { font-size: 0.95rem; padding: 6px 0 !important; }
+  .toolbar { padding: 6px; gap: 6px; }
+  .label-under { padding: 6px 4px; font-size: 0.95rem; }
+  header { padding: 8px 10px; }
+  .titlebar h1 { font-size: 1.1rem; }
+  .controls { gap: 6px; }
+  .group { padding: 4px 6px; gap: 4px; }
+  select, button, input[type="color"] { padding: 6px 8px; border-radius: 8px; }
+}
+
+@media (max-height: 700px) {
+  .stage { min-height: clamp(140px, 28vh, 200px); }
+}
+
+</style>
+</head>
+<body>
+  <header>
+    <div class="titlebar">
+      <span class="emoji" aria-hidden="true">✍️</span>
+      <h1>Letter Writing Fun</h1>
+    </div>
+    <div class="controls">
+      <div class="group">
+        <label for="mode">Practice:</label>
+        <select id="mode">
+          <option value="letters">Letters</option>
+          <option value="numbers">Numbers (0–9)</option>
+          <option value="all">Letters + Numbers</option>
+          <option value="pick">Chose one…</option>
+        </select>
+        <select id="picker" style="display:none"></select>
+        <button class="primary" id="nextBtn">Next</button>
+      </div>
+
+      <div class="group">
+        <label for="inkColor">Ink:</label>
+        <input id="inkColor" type="color" value="#2563eb" />
+      </div>
+
+      <div class="group">
+        <span>Current:</span>
+        <span id="currentLetterDisplay" class="badge">A</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="panels">
+      <div class="card" id="leftCard">
+        <header><h2 style="text-align:center; padding:10px 0">Trace the Guide</h2></header>
+        <div class="stage">
+          <canvas id="guideCanvas" class="guide"></canvas>
+          <canvas id="traceCanvas"></canvas>
+        </div>
+        <div class="toolbar">
+          <button id="undoLeft" class="ghost undo" title="Undo">⤺</button>
+          <button id="clearLeft" class="ghost" title="Clear">🗑️</button>
+        </div>
+      </div>
+
+      <div class="card" id="rightCard">
+        <header><h2 style="text-align:center; padding:10px 0">Try It Yourself</h2></header>
+        <div class="stage"><canvas id="freeCanvas"></canvas></div>
+        <div class="toolbar">
+          <button id="undoRight" class="ghost undo" title="Undo">⤺</button>
+          <button id="clearRight" class="ghost" title="Clear">🗑️</button>
+        </div>
+      </div>
+    </section>
+    <div id="labelLander" class="label-under">Abbie Apple</div>
+  </main>
+    <footer>&copy; <script>document.write(new Date().getFullYear());</script> Oren Fix (with some help from ChatGPT-5).<br>All rights reserved.</footer>
+
+
+  <script>
+    const letterlanders = {
+      'A':'Abbie Apple','B':'Bouncy Ben','C':'Clever Cat','D':'Dippy Duck','E':'Eddy Elephant','F':'Firefighter Fred','G':'Golden Girl','H':'Harry Hat Man','I':'Impy Ink','J':'Jumping Jim','K':'Kicking King','L':'Lucy Lamp Light','M':'Munching Mike','N':'Noisy Nick','O':'Oscar Orange','P':'Peter Puppy','Q':'Quarrelsome Queen','R':'Red Robot','S':'Sammy Snake','T':'Talking Tess','U':'Uppy Umbrella','V':'Vicky Violet','W':'Walter Walrus','X':'Fix-it Max','Y':'Yellow Yo-yo Man','Z':'Zig Zag Zebra'
+    };
+
+    const dpr = () => (window.devicePixelRatio || 1);
+    const letters = Array.from({length:26}, (_,i)=>String.fromCharCode(65+i)).concat(Array.from({length:26}, (_,i)=>String.fromCharCode(97+i)));
+    const numbers = Array.from({length:10}, (_,i)=>String(i));
+
+    function fitCanvas(canvas){
+      const rect = canvas.getBoundingClientRect();
+      const ratio = dpr();
+      const width = Math.max(1, Math.floor(rect.width * ratio));
+      const height = Math.max(1, Math.floor(rect.height * ratio));
+      if(canvas.width !== width || canvas.height !== height){
+        canvas.width = width; canvas.height = height;
+      }
+    }
+
+    function resolvedFont(fontPx){
+      document.fonts.load(`${fontPx}px ABeeZee`).catch(()=>{});
+      return `${fontPx}px ABeeZee, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif`;
+    }
+
+    function drawGuide(ctx, ch){
+      const {width:w, height:h} = ctx.canvas;
+      ctx.clearRect(0,0,w,h);
+      const margin = 0.08 * Math.min(w,h);
+      const fontPx = Math.floor((h - 2*margin) * 0.75);
+      ctx.font = resolvedFont(fontPx);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const x = w/2;
+      const y = h/2 + fontPx*0.06;
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--guide').trim();
+      ctx.fillText(ch, x, y);
+    }
+
+    function makeDrawer(canvas){
+      const ctx = canvas.getContext('2d');
+      const strokes = []; let current = null;
+      function redraw(){
+        ctx.clearRect(0,0,canvas.width, canvas.height);
+        const size = 12; // 12 px brush
+        ctx.lineCap='round'; ctx.lineJoin='round';
+        for(const s of strokes){
+          if(s.points.length<2) continue;
+          ctx.beginPath(); ctx.moveTo(s.points[0].x, s.points[0].y);
+          for(let i=1;i<s.points.length;i++) ctx.lineTo(s.points[i].x, s.points[i].y);
+          ctx.strokeStyle = s.color; ctx.lineWidth = size * dpr(); ctx.stroke();
+        }
+      }
+      function addPoint(x,y){ if(current){ current.points.push({x,y}); redraw(); } }
+      function start(x,y){ current={color:document.getElementById('inkColor').value,points:[]}; strokes.push(current); addPoint(x,y);} 
+      function end(){ current=null; }
+      function undo(){ strokes.pop(); redraw(); }
+      function clear(){ strokes.length=0; redraw(); }
+      const pos=(e)=>{ const r=canvas.getBoundingClientRect(); const x=((e.touches?e.touches[0].clientX:e.clientX)-r.left)*dpr(); const y=((e.touches?e.touches[0].clientY:e.clientY)-r.top)*dpr(); return {x,y}; };
+      let drawing=false;
+      canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);drawing=true;const p=pos(e);start(p.x,p.y)});
+      canvas.addEventListener('pointermove',e=>{if(!drawing)return;const p=pos(e);addPoint(p.x,p.y)});
+      canvas.addEventListener('pointerup',()=>{drawing=false;end()});
+      canvas.addEventListener('pointercancel',()=>{drawing=false;end()});
+      return{redraw,undo,clear};
+    }
+
+    const guideCanvas=document.getElementById('guideCanvas');
+    const traceCanvas=document.getElementById('traceCanvas');
+    const freeCanvas=document.getElementById('freeCanvas');
+    const labelLander=document.getElementById('labelLander');
+
+    const trace=makeDrawer(traceCanvas);
+    const free=makeDrawer(freeCanvas);
+    let currentChar='A';
+
+    function layout(){
+      fitCanvas(guideCanvas); fitCanvas(traceCanvas); fitCanvas(freeCanvas);
+      drawGuide(guideCanvas.getContext('2d'), currentChar);
+      trace.redraw(); free.redraw();
+    }
+    window.addEventListener('resize',layout);
+
+    const modeSel=document.getElementById('mode');
+    const pickerSel=document.getElementById('picker');
+    const letterBadge=document.getElementById('currentLetterDisplay');
+
+    function fillPicker(){ let opts=[]; letters.concat(numbers).forEach(ch=>opts.push(`<option value="${ch}">${ch}</option>`)); pickerSel.innerHTML=opts.join(''); }
+    function poolFor(mode){ if(mode==='letters')return letters; if(mode==='numbers')return numbers; if(mode==='all')return letters.concat(numbers); return letters; }
+    function pickRandom(){ const pool=poolFor(modeSel.value); const ch=pool[Math.floor(Math.random()*pool.length)]; setChar(ch); }
+
+    function landerNameFor(ch){
+      const up = ch.toUpperCase();
+      return letterlanders[up] || '';
+    }
+
+    function setChar(ch){
+      currentChar=ch; letterBadge.textContent=ch; drawGuide(guideCanvas.getContext('2d'), currentChar);
+      const name = /[A-Za-z]/.test(ch) ? landerNameFor(ch) : (ch);
+      labelLander.textContent = name;
+      trace.clear(); free.clear();
+    }
+
+    document.getElementById('nextBtn').addEventListener('click',pickRandom);
+    modeSel.addEventListener('change',()=>{const pickMode=modeSel.value==='pick';pickerSel.style.display=pickMode?'':'none';if(!pickMode){pickRandom();}else{setChar(pickerSel.value||'A')}});
+    pickerSel.addEventListener('change',()=>setChar(pickerSel.value));
+    document.getElementById('undoLeft').addEventListener('click',()=>trace.undo());
+    document.getElementById('clearLeft').addEventListener('click',()=>trace.clear());
+    document.getElementById('undoRight').addEventListener('click',()=>free.undo());
+    document.getElementById('clearRight').addEventListener('click',()=>free.clear());
+    document.getElementById('inkColor').addEventListener('input',()=>{trace.redraw();free.redraw()});
+
+    fillPicker(); layout(); setChar('A');
+  </script>
+</body>
+</html>
