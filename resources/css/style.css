@@ -71,7 +71,7 @@ h3 {
 }
 
 .list {
-	width: 40%;
+	width: 30%;
 	text-align: center;
 }
 
@@ -93,7 +93,7 @@ img.img {
 	}
 }
 
-@media only screen and (max-width: 800px) {
+@media only screen and (max-width: 844px) {
 	.lists {
 		flex-direction: column;
 	}
@@ -108,10 +108,11 @@ img.img {
 
 	.list {
 		width: 100%;
+		margin-bottom: 2rem;
 	}
 
-	.list:first-child {
-		margin-bottom: 2rem;
+	.list:last-child {
+		margin-bottom: 0;
 	}
 
 	img.xword {
@@ -150,7 +151,7 @@ h4 {
 p {
 	font-size: .9rem;
 	line-height: 1.1rem;
-	margin-bottom: 2rem;
+	margin-bottom: 1rem;
 }
 
 p:first-child {
