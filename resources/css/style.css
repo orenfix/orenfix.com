@@ -66,6 +66,10 @@ h2, h3 {
 	margin-bottom: 1rem;
 }
 
+h2 {
+	height: 48px;
+}
+
 h3 {
 	font-size: 1.5rem;
 }
@@ -76,13 +80,14 @@ h3 {
 }
 
 .list img {
-	width: 2.5rem;
+	width: 3rem;
 	height: auto;
 	margin-left: 1rem;
 }
 
 img.img {
 	width: 80%;
+	height: auto;
 	margin: 1rem 0 0 0;
 }
 
@@ -113,10 +118,6 @@ img.img {
 
 	.list:last-child {
 		margin-bottom: 0;
-	}
-
-	img.xword {
-		width: 60%;
 	}
 }
 
